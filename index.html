@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FH Advocacia - Sistema de Gestão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- A biblioteca de ícones foi removida para usar SVGs inline, garantindo a exibição -->
+    <style>
+        :root {
+            --bg-primary: #0D1B2A; /* Azul Marinho Escuro (Logo) */
+            --bg-secondary: #1A2D40; /* Azul Marinho Médio */
+            --text-primary: #E0E0E0; /* Cinza Claro / Quase Branco */
+            --text-secondary: #A9B4C2; /* Cinza Médio */
+            --accent: #C09A3E; /* Dourado (Logo) */
+            --danger: #e53e3e; /* Vermelho para erros */
+        }
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar { background-color: var(--bg-secondary); }
+        .nav-link { color: var(--text-secondary); }
+        .nav-link.active, .nav-link:hover { color: var(--accent); }
+        .card { background-color: var(--bg-secondary); border-left: 4px solid var(--accent); }
+        .table-header { background-color: #1d3557; }
+        .table-row:nth-child(even) { background-color: var(--bg-secondary); }
+        .table-row:nth-child(odd) { background-color: rgba(23, 42, 70, 0.7); }
+        .btn-primary { background-color: var(--accent); color: var(--bg-primary); font-weight: bold; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-icon { background-color: transparent; border: none; color: var(--text-secondary); cursor: pointer; }
+        .btn-icon:hover { color: var(--accent); }
+        .modal-bg { background-color: rgba(0,0,0,0.7); }
+        .modal-content { background-color: var(--bg-primary); }
+        input, select, textarea {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--text-secondary);
+            color: var(--text-primary);
+        }
+        input:focus, select:focus, textarea:focus {
+             border-color: var(--accent);
+             outline: none;
+        }
+        input.invalid, select.invalid, textarea.invalid {
+            border-color: var(--danger);
+        }
+        .error-message {
+            color: var(--danger);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+
+        /* Estilos do Calendário */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .calendar-day { background-color: var(--bg-secondary); min-height: 120px; padding: 8px; border-radius: 4px; }
+        .calendar-day-header { font-weight: bold; text-align: center; color: var(--text-secondary); padding-bottom: 4px; border-bottom: 1px solid #1d3557; }
+        .calendar-day-number { font-size: 0.9em; }
+        .calendar-day.other-month { background-color: #142638; opacity: 0.6; }
+        .calendar-task { font-size: 0.75em; padding: 2px 6px; margin-top: 4px; background-color: var(--accent); color: var(--bg-primary); border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar de Navegação -->
+    <aside class="sidebar w-64 flex-shrink-0 p-6 flex flex-col justify-between">
+        <div>
+            <h1 class="text-xl font-bold text-white mb-2 leading-tight">Fernando Henryque</h1>
+            <p class="text-xs text-text-secondary mb-10">Advocacia & Consultoria</p>
+            <nav class="space-y-4">
+                <a href="#" id="nav-dashboard" class="nav-link flex items-center space-x-3 p-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" id="nav-casos" class="nav-link flex items-center space-x-3 p-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 0H4v2h12V5zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 0H4v2h12v-2z" clip-rule="evenodd"></path></svg>
+                    <span>Casos</span>
+                </a>
+                <a href="#" id="nav-clientes" class="nav-link flex items-center space-x-3 p-2 rounded-lg transition-colors duration-200">
+                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg>
+                    <span>Clientes</span>
+                </a>
+                <a href="#" id="nav-calendario" class="nav-link flex items-center space-x-3 p-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                    <span>Calendário</span>
+                </a>
+                <a href="#" id="nav-relatorios" class="nav-link flex items-center space-x-3 p-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    <span>Relatórios</span>
+                </a>
+            </nav>
+        </div>
+        <div class="text-xs text-center text-gray-500">
+            <p>&copy; 2024 FH Advocacia</p>
+            <p>Desenvolvido por Gemini</p>
+        </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 p-8 overflow-y-auto">
+        <!-- Seção Dashboard -->
+        <section id="view-dashboard" class="page-view">
+            <h2 class="text-3xl font-bold text-white mb-6">Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-text-secondary">Casos Ativos</h3>
+                    <p id="dashboard-casos-ativos" class="text-4xl font-bold text-white mt-2">0</p>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-text-secondary">Próximos Prazos (7 dias)</h3>
+                    <p id="dashboard-proximos-prazos" class="text-4xl font-bold text-white mt-2">0</p>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-text-secondary">Faturamento do Mês</h3>
+                    <p id="dashboard-faturamento-mes" class="text-4xl font-bold text-white mt-2">R$ 0,00</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-text-secondary mb-4">Evolução de Casos no Mês</h3>
+                    <div class="relative h-80">
+                        <canvas id="casosChart"></canvas>
+                    </div>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-text-secondary mb-4">Prazos Urgentes</h3>
+                    <ul id="dashboard-prazos-urgentes-lista" class="space-y-4">
+                        <!-- Prazos urgentes serão inseridos aqui -->
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Casos -->
+        <section id="view-casos" class="page-view hidden">
+             <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-white">Gestão de Casos</h2>
+                <button id="btn-novo-caso" class="btn-primary px-4 py-2 rounded-lg flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
+                    <span>Novo Caso</span>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label for="filtro-status-caso" class="text-sm text-text-secondary">Filtrar por Status:</label>
+                <select id="filtro-status-caso" class="mt-1 block w-full md:w-1/4 p-2 rounded-lg border-gray-600">
+                    <option value="todos">Todos</option>
+                    <option value="Ativo">Ativo</option>
+                    <option value="Aguardando Documentos">Aguardando Documentos</option>
+                    <option value="Suspenso">Suspenso</option>
+                    <option value="Encerrado com Êxito">Encerrado com Êxito</option>
+                    <option value="Encerrado sem Êxito">Encerrado sem Êxito</option>
+                </select>
+            </div>
+            <div class="overflow-x-auto rounded-lg">
+                <table class="w-full text-left">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="p-4">Nº Processo</th>
+                            <th class="p-4">Título</th>
+                            <th class="p-4">Cliente</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Abertura</th>
+                            <th class="p-4">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="casos-lista">
+                        <!-- Casos serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Seção Detalhes do Caso -->
+        <section id="view-detalhes-caso" class="page-view hidden">
+            <!-- Conteúdo dinâmico gerado pelo JS -->
+        </section>
+
+        <!-- Seção Clientes -->
+        <section id="view-clientes" class="page-view hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-white">Clientes</h2>
+                <button id="btn-novo-cliente" class="btn-primary px-4 py-2 rounded-lg flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
+                    <span>Novo Cliente</span>
+                </button>
+            </div>
+            <div class="mb-4">
+                <input type="text" id="busca-cliente" placeholder="Buscar cliente por nome..." class="w-full md:w-1/3 p-2 rounded-lg">
+            </div>
+             <div class="overflow-x-auto rounded-lg">
+                <table class="w-full text-left">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="p-4">Nome Completo</th>
+                            <th class="p-4">CPF/CNPJ</th>
+                            <th class="p-4">Telefone</th>
+                            <th class="p-4">E-mail</th>
+                            <th class="p-4">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientes-lista">
+                        <!-- Clientes serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Seção Calendário -->
+        <section id="view-calendario" class="page-view hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-white">Calendário de Prazos</h2>
+                <div class="flex items-center space-x-4">
+                    <button id="btn-prev-month" class="btn-primary p-2 rounded-full">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <h3 id="calendar-month-year" class="text-xl font-semibold text-white"></h3>
+                    <button id="btn-next-month" class="btn-primary p-2 rounded-full">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-day-header">Dom</div>
+                <div class="calendar-day-header">Seg</div>
+                <div class="calendar-day-header">Ter</div>
+                <div class="calendar-day-header">Qua</div>
+                <div class="calendar-day-header">Qui</div>
+                <div class="calendar-day-header">Sex</div>
+                <div class="calendar-day-header">Sáb</div>
+            </div>
+            <div id="calendar-body" class="calendar-grid">
+                <!-- Dias do calendário serão inseridos aqui -->
+            </div>
+        </section>
+
+        <!-- Seção Relatórios -->
+        <section id="view-relatorios" class="page-view hidden">
+            <h2 class="text-3xl font-bold text-white mb-6">Relatórios</h2>
+            <div class="card p-6 rounded-lg shadow-lg">
+                 <h3 class="text-lg font-semibold text-text-secondary mb-4">Faturamento por Cliente</h3>
+                 <div class="overflow-x-auto rounded-lg">
+                    <table class="w-full text-left">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="p-4">Cliente</th>
+                                <th class="p-4">Total Faturado (Honorários)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relatorio-faturamento-lista">
+                            <!-- Dados do relatório serão inseridos aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Modal Novo/Editar Cliente -->
+    <div id="modal-cliente" class="modal-bg fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="modal-content w-full max-w-lg p-8 rounded-lg shadow-2xl">
+            <h3 id="modal-cliente-titulo" class="text-2xl font-bold mb-6">Adicionar Novo Cliente</h3>
+            <form id="form-cliente" novalidate>
+                <input type="hidden" name="id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <input type="text" name="nome" placeholder="Nome Completo" class="p-2 rounded w-full" required>
+                    </div>
+                    <div>
+                        <input type="text" name="cpfCnpj" placeholder="CPF/CNPJ" class="p-2 rounded w-full" required>
+                        <p id="cpf-error" class="error-message hidden">CPF inválido.</p>
+                    </div>
+                    <input type="tel" name="telefone" placeholder="Telefone" class="p-2 rounded">
+                    <input type="email" name="email" placeholder="E-mail" class="p-2 rounded">
+                </div>
+                <textarea name="endereco" placeholder="Endereço" class="w-full p-2 rounded mt-4" rows="3"></textarea>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" class="btn-cancelar-modal px-4 py-2 rounded text-text-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal Novo/Editar Caso -->
+    <div id="modal-caso" class="modal-bg fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="modal-content w-full max-w-lg p-8 rounded-lg shadow-2xl">
+            <h3 id="modal-caso-titulo" class="text-2xl font-bold mb-6">Adicionar Novo Caso</h3>
+            <form id="form-caso">
+                <input type="hidden" name="id">
+                <input type="text" name="numeroProcesso" placeholder="Número do Processo" class="w-full p-2 rounded mb-4" required>
+                <input type="text" name="titulo" placeholder="Título/Natureza do Caso" class="w-full p-2 rounded mb-4" required>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <select name="clienteId" id="select-cliente-caso" class="w-full p-2 rounded" required>
+                        <option value="">Selecione um Cliente</option>
+                    </select>
+                    <select name="status" class="w-full p-2 rounded" required>
+                        <option>Ativo</option>
+                        <option>Aguardando Documentos</option>
+                        <option>Suspenso</option>
+                        <option>Encerrado com Êxito</option>
+                        <option>Encerrado sem Êxito</option>
+                    </select>
+                </div>
+                <textarea name="descricao" placeholder="Descrição/Observações" class="w-full p-2 rounded mb-4" rows="4"></textarea>
+                <div class="mb-4">
+                    <label for="dataAbertura" class="text-sm text-text-secondary">Data de Abertura</label>
+                    <input type="date" name="dataAbertura" class="w-full p-2 rounded mt-1" required>
+                </div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" class="btn-cancelar-modal px-4 py-2 rounded text-text-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Nova Tarefa -->
+    <div id="modal-nova-tarefa" class="modal-bg fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="modal-content w-full max-w-lg p-8 rounded-lg shadow-2xl">
+            <h3 class="text-2xl font-bold mb-6">Adicionar Tarefa/Prazo</h3>
+            <form id="form-nova-tarefa">
+                <input type="hidden" name="casoId">
+                <textarea name="descricao" placeholder="Descrição da Tarefa" class="w-full p-2 rounded mb-4" rows="3" required></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" name="responsavel" placeholder="Responsável" class="p-2 rounded" required>
+                    <div>
+                         <label for="dataVencimento" class="text-sm text-text-secondary">Data de Vencimento</label>
+                         <input type="date" name="dataVencimento" class="w-full p-2 rounded mt-1" required>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" class="btn-cancelar-modal px-4 py-2 rounded text-text-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded">Salvar Tarefa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Novo Lançamento Financeiro -->
+    <div id="modal-novo-financeiro" class="modal-bg fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="modal-content w-full max-w-lg p-8 rounded-lg shadow-2xl">
+            <h3 class="text-2xl font-bold mb-6">Adicionar Lançamento Financeiro</h3>
+            <form id="form-novo-financeiro">
+                <input type="hidden" name="casoId">
+                <select name="tipo" class="w-full p-2 rounded mb-4" required>
+                    <option value="Receita - Honorários">Receita - Honorários</option>
+                    <option value="Despesa - Custas">Despesa - Custas</option>
+                </select>
+                <textarea name="descricao" placeholder="Descrição" class="w-full p-2 rounded mb-4" rows="2" required></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <label class="text-sm text-text-secondary">Valor (R$)</label>
+                         <input type="number" step="0.01" name="valor" placeholder="0.00" class="w-full p-2 rounded mt-1" required>
+                    </div>
+                    <div>
+                        <label class="text-sm text-text-secondary">Data</label>
+                        <input type="date" name="data" class="w-full p-2 rounded mt-1" required>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" class="btn-cancelar-modal px-4 py-2 rounded text-text-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded">Salvar Lançamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal Novo Documento -->
+    <div id="modal-novo-documento" class="modal-bg fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="modal-content w-full max-w-lg p-8 rounded-lg shadow-2xl">
+            <h3 class="text-2xl font-bold mb-6">Adicionar Documento</h3>
+            <form id="form-novo-documento">
+                <input type="hidden" name="casoId">
+                <input type="text" name="nome" placeholder="Nome do Documento (ex: Petição.pdf)" class="w-full p-2 rounded mb-4" required>
+                <input type="text" name="link" placeholder="Link (opcional)" class="w-full p-2 rounded mb-4">
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" class="btn-cancelar-modal px-4 py-2 rounded text-text-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded">Salvar Documento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div id="modal-confirmacao" class="modal-bg fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="modal-content w-full max-w-sm p-8 rounded-lg shadow-2xl">
+            <h3 class="text-xl font-bold mb-4 text-white">Confirmar Exclusão</h3>
+            <p class="text-text-secondary mb-6">Você tem certeza? Esta ação não pode ser desfeita.</p>
+            <div class="flex justify-end space-x-4">
+                <button type="button" class="btn-cancelar-modal px-4 py-2 rounded text-text-secondary">Cancelar</button>
+                <button id="btn-confirmar-exclusao" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- Repositório de Dados (localStorage) ---
+    const DB = {
+        getData: (key) => JSON.parse(localStorage.getItem(key)) || [],
+        setData: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
+        init: () => {
+            const keys = ['clientes', 'casos', 'tarefas', 'financeiro', 'documentos'];
+            const isFirstLoad = !localStorage.getItem('app_initialized');
+            if (isFirstLoad) {
+                keys.forEach(key => DB.setData(key, []));
+                populateWithSampleData();
+                localStorage.setItem('app_initialized', 'true');
+            }
+        }
+    };
+    
+    // --- Dados Fictícios ---
+    const populateWithSampleData = () => {
+        const today = new Date();
+        const formatDateForInput = (date) => date.toISOString().split('T')[0];
+        
+        const clientes = [
+            { id: 'c1', nome: 'Ana Carolina Souza', cpfCnpj: '123.456.789-00', telefone: '(86) 99999-1111', email: 'ana.souza@email.com', endereco: 'Rua das Flores, 123, Teresina-PI' },
+            { id: 'c2', nome: 'Bruno Medeiros', cpfCnpj: '987.654.321-11', telefone: '(86) 98888-2222', email: 'bruno.m@email.com', endereco: 'Av. Principal, 456, Teresina-PI' },
+            { id: 'c3', nome: 'Constructora Alfa LTDA', cpfCnpj: '12.345.678/0001-99', telefone: '(86) 3232-5050', email: 'contato@alfa.com', endereco: 'Distrito Industrial, 789, Teresina-PI' }
+        ];
+        
+        const casos = [
+            { id: 'k1', numeroProcesso: '0012345-67.2025.8.18.0001', titulo: 'Ação de Indenização', clienteId: 'c1', status: 'Ativo', descricao: 'Ação por danos morais contra empresa de telefonia.', dataAbertura: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 2))},
+            { id: 'k2', numeroProcesso: '0098765-43.2025.8.18.0002', titulo: 'Defesa Trabalhista', clienteId: 'c3', status: 'Aguardando Documentos', descricao: 'Defesa em reclamação trabalhista movida por ex-funcionário.', dataAbertura: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 5))},
+            { id: 'k3', numeroProcesso: '0055555-22.2024.8.18.0001', titulo: 'Ação de Divórcio', clienteId: 'c2', status: 'Encerrado com Êxito', descricao: 'Divórcio consensual finalizado.', dataAbertura: formatDateForInput(new Date(today.getFullYear(), today.getMonth() - 1, 15))}
+        ];
+        
+        const tarefas = [
+            { id: 't1', casoId: 'k1', descricao: 'Protocolar petição inicial', responsavel: 'Dr. Fernando', dataVencimento: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3)), status: 'Pendente' },
+            { id: 't2', casoId: 'k1', descricao: 'Audiência de conciliação', responsavel: 'Dr. Fernando', dataVencimento: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 15)), status: 'Pendente' },
+            { id: 't3', casoId: 'k2', descricao: 'Coletar cartões de ponto', responsavel: 'Estagiário', dataVencimento: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)), status: 'Concluída' }
+        ];
+
+        const financeiros = [
+            { id: 'f1', casoId: 'k1', tipo: 'Receita - Honorários', descricao: 'Entrada de honorários', valor: 1500.00, data: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 3))},
+            { id: 'f2', casoId: 'k1', tipo: 'Despesa - Custas', descricao: 'Pagamento de custas iniciais', valor: 250.50, data: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 2))},
+            { id: 'f3', casoId: 'k3', tipo: 'Receita - Honorários', descricao: 'Honorários de êxito', valor: 3000.00, data: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 1))}
+        ];
+
+        const documentos = [
+            { id: 'd1', casoId: 'k1', nome: 'Procuração_Ana_Souza.pdf', link: '#' },
+            { id: 'd2', casoId: 'k1', nome: 'Comprovante_Residencia.pdf', link: '#' },
+        ];
+        
+        DB.setData('clientes', clientes);
+        DB.setData('casos', casos);
+        DB.setData('tarefas', tarefas);
+        DB.setData('financeiro', financeiros);
+        DB.setData('documentos', documentos);
+    };
+
+    DB.init();
+
+    // --- Gerenciamento de Navegação e Views ---
+    const navLinks = document.querySelectorAll('.nav-link');
+    const pageViews = document.querySelectorAll('.page-view');
+    let chartInstance = null;
+    let calendarDate = new Date();
+
+    const navigateTo = (viewId) => {
+        pageViews.forEach(view => view.classList.add('hidden'));
+        document.getElementById(viewId).classList.remove('hidden');
+
+        navLinks.forEach(link => link.classList.remove('active'));
+        const activeLink = document.getElementById(`nav-${viewId.split('-')[1]}`);
+        if (activeLink) activeLink.classList.add('active');
+
+        // Renderiza conteúdo específico da página
+        if (viewId === 'view-dashboard') renderDashboard();
+        if (viewId === 'view-casos') renderCasos();
+        if (viewId === 'view-clientes') renderClientes();
+        if (viewId === 'view-calendario') renderCalendario();
+        if (viewId === 'view-relatorios') renderRelatorios();
+    };
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const viewId = `view-${e.currentTarget.id.split('-')[1]}`;
+            navigateTo(viewId);
+        });
+    });
+
+    // --- Gerenciamento de Modals ---
+    const modals = document.querySelectorAll('.modal-bg');
+    const showModal = (modalId) => document.getElementById(modalId).classList.remove('hidden');
+    const hideModals = () => {
+        modals.forEach(modal => modal.classList.add('hidden'));
+        // Limpa erros de validação ao fechar
+        document.getElementById('cpf-error').classList.add('hidden');
+        document.querySelector('[name="cpfCnpj"]').classList.remove('invalid');
+    };
+    
+    document.querySelectorAll('.btn-cancelar-modal').forEach(btn => btn.addEventListener('click', hideModals));
+    modals.forEach(modal => modal.addEventListener('click', (e) => {
+        if (e.target === modal) hideModals();
+    }));
+
+    // --- Funções de Renderização ---
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+    };
+
+    const formatCurrency = (value) => {
+        return parseFloat(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
+
+    const getStatusBadge = (status) => {
+        const colors = {
+            'Ativo': 'bg-blue-500',
+            'Aguardando Documentos': 'bg-yellow-500',
+            'Suspenso': 'bg-gray-500',
+            'Encerrado com Êxito': 'bg-green-500',
+            'Encerrado sem Êxito': 'bg-red-500',
+        };
+        return `<span class="px-2 py-1 text-xs font-semibold text-white rounded-full ${colors[status] || 'bg-gray-400'}">${status}</span>`;
+    };
+    
+    // --- Validador de CPF ---
+    const validarCPF = (cpf) => {
+        cpf = String(cpf).replace(/[^\d]+/g, '');
+        if (cpf === '' || cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+        let add = 0;
+        for (let i = 0; i < 9; i++) add += parseInt(cpf.charAt(i)) * (10 - i);
+        let rev = 11 - (add % 11);
+        if (rev === 10 || rev === 11) rev = 0;
+        if (rev !== parseInt(cpf.charAt(9))) return false;
+        add = 0;
+        for (let i = 0; i < 10; i++) add += parseInt(cpf.charAt(i)) * (11 - i);
+        rev = 11 - (add % 11);
+        if (rev === 10 || rev === 11) rev = 0;
+        if (rev !== parseInt(cpf.charAt(10))) return false;
+        return true;
+    };
+
+
+    // --- Módulo de Clientes ---
+    const clientesLista = document.getElementById('clientes-lista');
+    const renderClientes = (filter = '') => {
+        const clientes = DB.getData('clientes');
+        const filteredClientes = clientes.filter(c => c.nome.toLowerCase().includes(filter.toLowerCase()));
+        
+        clientesLista.innerHTML = filteredClientes.length > 0 ? filteredClientes.map(c => `
+            <tr class="table-row">
+                <td class="p-4">${c.nome}</td>
+                <td class="p-4">${c.cpfCnpj}</td>
+                <td class="p-4">${c.telefone || 'N/A'}</td>
+                <td class="p-4">${c.email || 'N/A'}</td>
+                <td class="p-4">
+                    <button class="btn-icon btn-editar-cliente" data-id="${c.id}" title="Editar">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <button class="btn-icon btn-excluir" data-id="${c.id}" data-key="clientes" title="Excluir">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </td>
+            </tr>
+        `).join('') : `<tr><td colspan="5" class="p-4 text-center text-text-secondary">Nenhum cliente encontrado.</td></tr>`;
+    };
+
+    document.getElementById('btn-novo-cliente').addEventListener('click', () => {
+        document.getElementById('modal-cliente-titulo').textContent = 'Adicionar Novo Cliente';
+        const form = document.getElementById('form-cliente');
+        form.reset();
+        form.querySelector('[name="id"]').value = '';
+        showModal('modal-cliente');
+    });
+    
+    document.getElementById('form-cliente').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const cpfCnpjInput = e.target.querySelector('[name="cpfCnpj"]');
+        const cpfError = document.getElementById('cpf-error');
+        const cpfCnpjValue = String(formData.get('cpfCnpj')).replace(/[^\d]/g, '');
+
+        // Valida CPF apenas se for um CPF (11 dígitos)
+        if (cpfCnpjValue.length === 11) {
+            if (!validarCPF(cpfCnpjValue)) {
+                cpfError.classList.remove('hidden');
+                cpfCnpjInput.classList.add('invalid');
+                return;
+            }
+        }
+
+        cpfError.classList.add('hidden');
+        cpfCnpjInput.classList.remove('invalid');
+
+        const clienteId = formData.get('id');
+        const clientes = DB.getData('clientes');
+
+        if (clienteId) { // Edição
+            const clienteIndex = clientes.findIndex(c => c.id === clienteId);
+            if (clienteIndex > -1) {
+                clientes[clienteIndex] = { ...clientes[clienteIndex], ...Object.fromEntries(formData) };
+            }
+        } else { // Novo
+            const novoCliente = { id: crypto.randomUUID(), ...Object.fromEntries(formData) };
+            clientes.push(novoCliente);
+        }
+        
+        DB.setData('clientes', clientes);
+        hideModals();
+        renderClientes();
+    });
+
+    document.querySelector('[name="cpfCnpj"]').addEventListener('input', (e) => {
+        e.target.classList.remove('invalid');
+        document.getElementById('cpf-error').classList.add('hidden');
+    });
+
+    document.getElementById('busca-cliente').addEventListener('input', (e) => renderClientes(e.target.value));
+
+    // --- Módulo de Casos ---
+    const casosLista = document.getElementById('casos-lista');
+    const renderCasos = (statusFilter = 'todos') => {
+        const casos = DB.getData('casos');
+        const clientes = DB.getData('clientes');
+        
+        const filteredCasos = statusFilter === 'todos' 
+            ? casos 
+            : casos.filter(c => c.status === statusFilter);
+
+        casosLista.innerHTML = filteredCasos.length > 0 ? filteredCasos.map(c => {
+            const cliente = clientes.find(cli => cli.id === c.clienteId);
+            return `
+                <tr class="table-row">
+                    <td class="p-4">${c.numeroProcesso}</td>
+                    <td class="p-4">${c.titulo}</td>
+                    <td class="p-4">${cliente ? cliente.nome : 'Cliente não encontrado'}</td>
+                    <td class="p-4">${getStatusBadge(c.status)}</td>
+                    <td class="p-4">${formatDate(c.dataAbertura)}</td>
+                    <td class="p-4 flex items-center space-x-2">
+                        <button class="text-sm text-accent hover:underline btn-ver-caso" data-id="${c.id}">Detalhes</button>
+                        <button class="btn-icon btn-editar-caso" data-id="${c.id}" title="Editar">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <button class="btn-icon btn-excluir" data-id="${c.id}" data-key="casos" title="Excluir">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    </td>
+                </tr>
+            `
+        }).join('') : `<tr><td colspan="6" class="p-4 text-center text-text-secondary">Nenhum caso encontrado.</td></tr>`;
+    };
+
+    const popularSelectClientes = (selectedId = '') => {
+        const clientes = DB.getData('clientes');
+        const select = document.getElementById('select-cliente-caso');
+        select.innerHTML = '<option value="">Selecione um Cliente</option>' + clientes.map(c => `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${c.nome}</option>`).join('');
+    };
+
+    document.getElementById('btn-novo-caso').addEventListener('click', () => {
+        document.getElementById('modal-caso-titulo').textContent = 'Adicionar Novo Caso';
+        const form = document.getElementById('form-caso');
+        form.reset();
+        form.querySelector('[name="id"]').value = '';
+        popularSelectClientes();
+        showModal('modal-caso');
+    });
+
+    document.getElementById('form-caso').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const casoId = formData.get('id');
+        const casos = DB.getData('casos');
+
+        if (casoId) { // Edição
+            const casoIndex = casos.findIndex(c => c.id === casoId);
+            if(casoIndex > -1) {
+                casos[casoIndex] = { ...casos[casoIndex], ...Object.fromEntries(formData) };
+            }
+        } else { // Novo
+            const novoCaso = { id: crypto.randomUUID(), ...Object.fromEntries(formData) };
+            casos.push(novoCaso);
+        }
+
+        DB.setData('casos', casos);
+        hideModals();
+        renderCasos();
+    });
+    
+    document.getElementById('filtro-status-caso').addEventListener('change', (e) => renderCasos(e.target.value));
+
+    // --- Módulo Detalhes do Caso, Tarefas e Financeiro ---
+    const detalhesCasoView = document.getElementById('view-detalhes-caso');
+    
+    const renderDetalhesCaso = (casoId) => {
+        const caso = DB.getData('casos').find(c => c.id === casoId);
+        if (!caso) { navigateTo('view-casos'); return; }
+
+        const cliente = DB.getData('clientes').find(cli => cli.id === caso.clienteId);
+        const tarefas = DB.getData('tarefas').filter(t => t.casoId === casoId);
+        const financeiros = DB.getData('financeiro').filter(f => f.casoId === casoId);
+        const documentos = DB.getData('documentos').filter(d => d.casoId === casoId);
+
+        const totalReceitas = financeiros.filter(f => f.tipo.startsWith('Receita')).reduce((sum, f) => sum + parseFloat(f.valor), 0);
+        const totalDespesas = financeiros.filter(f => f.tipo.startsWith('Despesa')).reduce((sum, f) => sum + parseFloat(f.valor), 0);
+        const balanco = totalReceitas - totalDespesas;
+
+        detalhesCasoView.innerHTML = `
+            <button id="btn-voltar-casos" class="mb-6 text-accent hover:underline">&larr; Voltar para a lista de casos</button>
+            <div class="card p-6 rounded-lg shadow-lg mb-8">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="text-3xl font-bold text-white">${caso.titulo}</h2>
+                        <p class="text-text-secondary">Processo Nº: ${caso.numeroProcesso}</p>
+                        <p class="mt-2 text-text-primary">Cliente: <span class="font-semibold">${cliente ? cliente.nome : 'N/A'}</span></p>
+                    </div>
+                    <div>${getStatusBadge(caso.status)}</div>
+                </div>
+                <p class="mt-4 text-text-secondary">${caso.descricao || 'Nenhuma descrição fornecida.'}</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Seção de Tarefas/Prazos -->
+                <div class="lg:col-span-1">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-2xl font-bold text-white">Tarefas e Prazos</h3>
+                        <button id="btn-nova-tarefa" class="btn-primary px-3 py-1 rounded-lg text-sm" data-caso-id="${caso.id}">+ Nova</button>
+                    </div>
+                    <ul id="lista-tarefas" class="space-y-3">
+                        ${tarefas.length > 0 ? tarefas.sort((a,b) => new Date(a.dataVencimento) - new Date(b.dataVencimento)).map(t => {
+                            const vencido = new Date(t.dataVencimento) < new Date() && t.status === 'Pendente';
+                            const statusClass = t.status === 'Concluída' ? 'line-through text-green-400' : (vencido ? 'text-red-400 font-bold' : 'text-text-primary');
+                            return `
+                                <li class="p-4 rounded-lg flex items-center justify-between" style="background-color: var(--bg-secondary);">
+                                    <div>
+                                        <p class="${statusClass}">${t.descricao}</p>
+                                        <p class="text-xs text-text-secondary">Venc: ${formatDate(t.dataVencimento)} - Resp: ${t.responsavel}</p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                         <input type="checkbox" class="tarefa-status-check transform scale-125" data-id="${t.id}" ${t.status === 'Concluída' ? 'checked' : ''}>
+                                         <button class="btn-icon btn-excluir" data-id="${t.id}" data-key="tarefas" data-caso-id="${caso.id}">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                                         </button>
+                                    </div>
+                                </li>
+                            `
+                        }).join('') : '<p class="text-text-secondary text-center p-4">Nenhuma tarefa.</p>'}
+                    </ul>
+                </div>
+
+                <!-- Seção Financeira -->
+                <div class="lg:col-span-1">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-2xl font-bold text-white">Financeiro</h3>
+                        <button id="btn-novo-financeiro" class="btn-primary px-3 py-1 rounded-lg text-sm" data-caso-id="${caso.id}">+ Novo</button>
+                    </div>
+                    <div class="p-4 rounded-lg mb-4" style="background-color: var(--bg-secondary);">
+                        <p class="text-lg font-bold">Balanço: <span class="${balanco >= 0 ? 'text-green-400' : 'text-red-400'}">${formatCurrency(balanco)}</span></p>
+                    </div>
+                    <ul id="lista-financeiro" class="space-y-3">
+                         ${financeiros.length > 0 ? financeiros.map(f => {
+                            const isReceita = f.tipo.startsWith('Receita');
+                            return `
+                                 <li class="p-3 rounded-lg flex items-center justify-between" style="background-color: var(--bg-secondary);">
+                                    <div>
+                                        <p class="font-semibold">${f.descricao}</p>
+                                        <p class="text-xs text-text-secondary">${f.tipo} - ${formatDate(f.data)}</p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <p class="font-bold ${isReceita ? 'text-green-400' : 'text-red-400'}">${isReceita ? '+' : '-'} ${formatCurrency(f.valor)}</p>
+                                        <button class="btn-icon btn-excluir" data-id="${f.id}" data-key="financeiro" data-caso-id="${caso.id}">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                                        </button>
+                                    </div>
+                                 </li>
+                            `
+                         }).join('') : '<p class="text-text-secondary text-center p-4">Nenhum lançamento.</p>'}
+                    </ul>
+                </div>
+                
+                <!-- Seção de Documentos -->
+                <div class="lg:col-span-1">
+                     <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-2xl font-bold text-white">Documentos</h3>
+                        <button id="btn-novo-documento" class="btn-primary px-3 py-1 rounded-lg text-sm" data-caso-id="${caso.id}">+ Novo</button>
+                    </div>
+                    <ul id="lista-documentos" class="space-y-3">
+                        ${documentos.length > 0 ? documentos.map(d => `
+                             <li class="p-3 rounded-lg flex items-center justify-between" style="background-color: var(--bg-secondary);">
+                                <a href="${d.link || '#'}" target="_blank" class="flex items-center space-x-2 text-accent hover:underline">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>
+                                    <span>${d.nome}</span>
+                                </a>
+                                <button class="btn-icon btn-excluir" data-id="${d.id}" data-key="documentos" data-caso-id="${caso.id}">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                                </button>
+                             </li>
+                        `).join('') : '<p class="text-text-secondary text-center p-4">Nenhum documento.</p>'}
+                    </ul>
+                </div>
+            </div>
+        `;
+        navigateTo('view-detalhes-caso');
+    };
+    
+    // --- Lógica de Exclusão ---
+    let itemParaExcluir = { id: null, key: null, casoId: null };
+    document.getElementById('btn-confirmar-exclusao').addEventListener('click', () => {
+        if (itemParaExcluir.id && itemParaExcluir.key) {
+            let data = DB.getData(itemParaExcluir.key);
+            DB.setData(itemParaExcluir.key, data.filter(item => item.id !== itemParaExcluir.id));
+
+            if (itemParaExcluir.key === 'casos') { // Se excluir um caso, exclui tudo relacionado
+                ['tarefas', 'financeiro', 'documentos'].forEach(relatedKey => {
+                    let relatedData = DB.getData(relatedKey).filter(item => item.casoId !== itemParaExcluir.id);
+                    DB.setData(relatedKey, relatedData);
+                });
+            }
+        }
+        hideModals();
+        
+        if (itemParaExcluir.casoId) { // Se estava na tela de detalhes, renderiza de novo
+            renderDetalhesCaso(itemParaExcluir.casoId);
+        } else { // Senão, vai para a lista principal
+            if (itemParaExcluir.key === 'clientes') renderClientes();
+            if (itemParaExcluir.key === 'casos') renderCasos();
+        }
+
+        itemParaExcluir = { id: null, key: null, casoId: null };
+    });
+
+    // Event delegation para botões e checkboxes dinâmicos
+    document.body.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        if (target.classList.contains('btn-ver-caso')) {
+            renderDetalhesCaso(target.dataset.id);
+        } else if (target.id === 'btn-voltar-casos') {
+            navigateTo('view-casos');
+        } else if (target.id === 'btn-nova-tarefa') {
+            document.querySelector('#form-nova-tarefa [name="casoId"]').value = target.dataset.casoId;
+            showModal('modal-nova-tarefa');
+        } else if (target.id === 'btn-novo-financeiro') {
+            document.querySelector('#form-novo-financeiro [name="casoId"]').value = target.dataset.casoId;
+            showModal('modal-novo-financeiro');
+        } else if (target.id === 'btn-novo-documento') {
+            document.querySelector('#form-novo-documento [name="casoId"]').value = target.dataset.casoId;
+            showModal('modal-novo-documento');
+        } else if (target.classList.contains('btn-editar-cliente')) {
+            const cliente = DB.getData('clientes').find(c => c.id === target.dataset.id);
+            if(cliente) {
+                document.getElementById('modal-cliente-titulo').textContent = 'Editar Cliente';
+                const form = document.getElementById('form-cliente');
+                Object.keys(cliente).forEach(key => form.querySelector(`[name="${key}"]`).value = cliente[key]);
+                showModal('modal-cliente');
+            }
+        } else if (target.classList.contains('btn-editar-caso')) {
+            const caso = DB.getData('casos').find(c => c.id === target.dataset.id);
+            if(caso) {
+                document.getElementById('modal-caso-titulo').textContent = 'Editar Caso';
+                const form = document.getElementById('form-caso');
+                Object.keys(caso).forEach(key => {
+                    if (form.querySelector(`[name="${key}"]`)) {
+                        form.querySelector(`[name="${key}"]`).value = caso[key];
+                    }
+                });
+                popularSelectClientes(caso.clienteId);
+                showModal('modal-caso');
+            }
+        } else if (target.classList.contains('btn-excluir')) {
+            itemParaExcluir = { id: target.dataset.id, key: target.dataset.key, casoId: target.dataset.casoId || null };
+            showModal('modal-confirmacao');
+        }
+    });
+
+    document.body.addEventListener('change', (e) => {
+        if (e.target.matches('.tarefa-status-check')) {
+            const tarefaId = e.target.dataset.id;
+            const tarefas = DB.getData('tarefas');
+            const tarefa = tarefas.find(t => t.id === tarefaId);
+            if(tarefa) {
+                tarefa.status = e.target.checked ? 'Concluída' : 'Pendente';
+                DB.setData('tarefas', tarefas);
+                renderDetalhesCaso(tarefa.casoId);
+            }
+        }
+    });
+
+    // Submissão dos forms de criação
+    document.getElementById('form-nova-tarefa').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const casoId = formData.get('casoId');
+        const novaTarefa = { id: crypto.randomUUID(), casoId, status: 'Pendente', ...Object.fromEntries(formData)};
+        const tarefas = DB.getData('tarefas');
+        tarefas.push(novaTarefa);
+        DB.setData('tarefas', tarefas);
+        e.target.reset();
+        hideModals();
+        renderDetalhesCaso(casoId);
+    });
+
+    document.getElementById('form-novo-financeiro').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const casoId = formData.get('casoId');
+        const novoLancamento = { id: crypto.randomUUID(), casoId, ...Object.fromEntries(formData) };
+        novoLancamento.valor = parseFloat(novoLancamento.valor);
+        const financeiros = DB.getData('financeiro');
+        financeiros.push(novoLancamento);
+        DB.setData('financeiro', financeiros);
+        e.target.reset();
+        hideModals();
+        renderDetalhesCaso(casoId);
+    });
+
+    document.getElementById('form-novo-documento').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const casoId = formData.get('casoId');
+        const novoDocumento = { id: crypto.randomUUID(), casoId, ...Object.fromEntries(formData) };
+        const documentos = DB.getData('documentos');
+        documentos.push(novoDocumento);
+        DB.setData('documentos', documentos);
+        e.target.reset();
+        hideModals();
+        renderDetalhesCaso(casoId);
+    });
+
+    // --- Módulo Dashboard ---
+    const renderDashboard = () => {
+        const casos = DB.getData('casos');
+        const tarefas = DB.getData('tarefas');
+        const financeiros = DB.getData('financeiro');
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const sevenDaysFromNow = new Date();
+        sevenDaysFromNow.setDate(now.getDate() + 7);
+
+        document.getElementById('dashboard-casos-ativos').textContent = casos.filter(c => c.status === 'Ativo').length;
+        document.getElementById('dashboard-proximos-prazos').textContent = tarefas.filter(t => {
+            const dataVencimento = new Date(t.dataVencimento);
+            return t.status === 'Pendente' && dataVencimento >= now && dataVencimento <= sevenDaysFromNow;
+        }).length;
+        const faturamentoMes = financeiros.filter(f => {
+            const dataLancamento = new Date(f.data);
+            return f.tipo.startsWith('Receita') && dataLancamento >= startOfMonth && dataLancamento <= now;
+        }).reduce((sum, f) => sum + f.valor, 0);
+        document.getElementById('dashboard-faturamento-mes').textContent = formatCurrency(faturamentoMes);
+
+        const prazosUrgentes = tarefas
+            .filter(t => t.status === 'Pendente' && new Date(t.dataVencimento) >= now)
+            .sort((a,b) => new Date(a.dataVencimento) - new Date(b.dataVencimento))
+            .slice(0, 5);
+        document.getElementById('dashboard-prazos-urgentes-lista').innerHTML = prazosUrgentes.length > 0 ? prazosUrgentes.map(t => {
+            const caso = casos.find(c => c.id === t.casoId);
+            return `<li class="border-b border-gray-700 pb-2">
+                <p class="font-semibold">${t.descricao}</p>
+                <p class="text-xs text-text-secondary">Caso: ${caso ? caso.titulo : 'N/A'} | Venc.: ${formatDate(t.dataVencimento)}</p>
+            </li>`;
+        }).join('') : `<p class="text-text-secondary text-center">Nenhum prazo urgente.</p>`;
+        
+        renderCasosChart(casos, now);
+    };
+
+    const renderCasosChart = (casos, now) => {
+        const ctx = document.getElementById('casosChart').getContext('2d');
+        if (!ctx) return;
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+        const novosCasosPorDia = new Array(daysInMonth).fill(0);
+        const casosEncerradosPorDia = new Array(daysInMonth).fill(0);
+
+        casos.forEach(caso => {
+            const dataAbertura = new Date(caso.dataAbertura);
+            if (dataAbertura.getMonth() === now.getMonth() && dataAbertura.getFullYear() === now.getFullYear()) {
+                novosCasosPorDia[dataAbertura.getDate()]++;
+            }
+            if (caso.status.startsWith('Encerrado')) {
+                const diaEncerramento = (parseInt(caso.id.slice(-1), 16) % daysInMonth) + 1;
+                casosEncerradosPorDia[diaEncerramento]++;
+            }
+        });
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [ { label: 'Novos Casos', data: novosCasosPorDia, borderColor: 'rgba(54, 162, 235, 1)', backgroundColor: 'rgba(54, 162, 235, 0.2)', fill: true, tension: 0.3 }, { label: 'Casos Encerrados', data: casosEncerradosPorDia, borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', fill: true, tension: 0.3 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: 'var(--text-secondary)', stepSize: 1 }, grid: { color: 'rgba(136, 146, 176, 0.1)' } }, x: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'rgba(136, 146, 176, 0.1)' } } }, plugins: { legend: { labels: { color: 'var(--text-primary)' } } } } });
+    };
+
+    // --- Módulo Calendário ---
+    const renderCalendario = () => {
+        const calendarBody = document.getElementById('calendar-body');
+        const monthYearLabel = document.getElementById('calendar-month-year');
+        
+        const month = calendarDate.getMonth();
+        const year = calendarDate.getFullYear();
+
+        monthYearLabel.textContent = `${calendarDate.toLocaleString('pt-BR', { month: 'long' })} de ${year}`;
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        calendarBody.innerHTML = '';
+
+        const tarefas = DB.getData('tarefas');
+        const tarefasDoMes = tarefas.filter(t => {
+            const dataVencimento = new Date(t.dataVencimento);
+            return dataVencimento.getMonth() === month && dataVencimento.getFullYear() === year;
+        });
+
+        for (let i = 0; i < firstDay; i++) {
+            calendarBody.innerHTML += `<div class="calendar-day other-month"></div>`;
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const tarefasDoDia = tarefasDoMes.filter(t => new Date(t.dataVencimento).getUTCDate() === day);
+            calendarBody.innerHTML += `
+                <div class="calendar-day">
+                    <span class="calendar-day-number">${day}</span>
+                    ${tarefasDoDia.map(t => `<div class="calendar-task" title="${t.descricao}">${t.descricao}</div>`).join('')}
+                </div>
+            `;
+        }
+    };
+    
+    document.getElementById('btn-prev-month').addEventListener('click', () => {
+        calendarDate.setMonth(calendarDate.getMonth() - 1);
+        renderCalendario();
+    });
+    document.getElementById('btn-next-month').addEventListener('click', () => {
+        calendarDate.setMonth(calendarDate.getMonth() + 1);
+        renderCalendario();
+    });
+
+    // --- Módulo Relatórios ---
+    const renderRelatorios = () => {
+        const clientes = DB.getData('clientes');
+        const financeiros = DB.getData('financeiro');
+        const faturamentoLista = document.getElementById('relatorio-faturamento-lista');
+        
+        let relatorio = clientes.map(cliente => {
+            const casosDoCliente = DB.getData('casos').filter(c => c.clienteId === cliente.id).map(c => c.id);
+            const totalFaturado = financeiros
+                .filter(f => casosDoCliente.includes(f.casoId) && f.tipo.startsWith('Receita'))
+                .reduce((sum, f) => sum + f.valor, 0);
+            return { nome: cliente.nome, total: totalFaturado };
+        });
+
+        faturamentoLista.innerHTML = relatorio
+            .sort((a,b) => b.total - a.total)
+            .map(r => `
+            <tr class="table-row">
+                <td class="p-4">${r.nome}</td>
+                <td class="p-4 font-semibold">${formatCurrency(r.total)}</td>
+            </tr>
+        `).join('');
+    };
+
+
+    // --- Inicialização ---
+    navigateTo('view-dashboard');
+});
+</script>
+</body>
+</html>
